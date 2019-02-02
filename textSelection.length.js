@@ -110,7 +110,7 @@
     $('form').submit(removeCounter);
     //FIX: This causes blinking
     $(window).blur(removeCounter);
-    $('body').mouseleave(removeCounter).mouseenter(key); //Blinks
+    $('body').mouseleave(removeCounter); //Blinks
     $('body').keydown(key).keyup(key).click(key).dblclick(function () {
         setTimeout(key, 10)
     });
