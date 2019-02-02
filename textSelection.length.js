@@ -8,80 +8,122 @@
 // @include https://userscripts-mirror.org/scripts/*/147224*
 // ==/UserScript==
 
-(function($){
+(function ($) {
 
-	/**
-	 * Setting up
-	 */
+    /**
+     * Setting up
+     */
 
-	$ = $.noConflict();
+    $ = $.noConflict();
 
-	id ='tslc_counter_225258';//(new Date()).getTime()
+    id = 'tslc_counter_225258';//(new Date()).getTime()
 
-	counter = $('#'+id);
+    counter = $('#' + id);
 
-	//counter.remove();
+    //counter.remove();
 
-	/**
-	 * Main function
-	 */
+    /**
+     * Service functions
+     */
 
-	key = function(e){
+    function getSelectedText() {
+        var el = document.activeElement;
+        var text = "";
 
-		Length=0;
+        //if selection is in input or textarea, or something similar
+        if (typeof el.selectionStart == "number")
+        {
+            text = el.value.slice(el.selectionStart, el.selectionEnd);
+        }
+        //else if selection is in plain document
+        else
+        {
+            if (typeof window.getSelection != "undefined") { // if we have method getSelection, use it
+                text = window.getSelection().toString();
+            } else { // for IE
+                text = document.selection.createRange().text;
+            }
+        }
 
-		//if (!e.ctrlKey) return
-		if (!counter.length)
-		{
-			$('body').append('<div style=\'position:absolute; display:none; height:30px; width:38px; line-height:29px; text-align:center; opacity:10.5; z-index:1200000000000; color:black; background:#f5f5f5; -background:rgba(255,255,255,0.95); background-opacity:0.5; \' id=\''+id+'\'></div>');
-		}
+        return text;
+    }
 
-		counter = $('#'+id);
+    function getWords(str)
+    {
+        //parameter check
+        if (typeof str != "string" || !str.length)
+            return [];
 
-		try
-		{
-			obj = document.activeElement;
-            if (typeof obj !== "undefined" && ((obj.tagName == 'INPUT' && obj.type == 'text') || obj.tagName == 'TEXTAREA'))
-			{
-                Length = obj.selectionEnd - obj.selectionStart;
-			}
-		}
-		catch(e)
-		{
-			//do nothing
-		}
-			
-		if (!Length)
-		{
-			Length = document.getSelection().toString().length;
-		}
+        //added Russian, Belarussian, Ukranian and English support
+        //words with "-" should have mote than 1 symbol ("-" is not a word)
+        var words = str.match(/([\wа-яА-ЯҐЄІЇЎґєіїў-]{2,}|[\wа-яА-ЯҐЄІЇЎґєіїў]{1,})/ig);
+        if (words !== null)
+            return words;
+        else
+            return [];
+    }
 
-		if (Length)
-		{
-			counter.html(0+Length);
-			counter.show();
-		}
-		else 
-		{
-			counter.hide();
-			counter.remove();
-		}
-	};
+    function removeCounter()
+    {
+        counter.remove();
+    }
 
-	/**
-	 * Event handlers
-	 */
-	$('form').submit(function(){counter.remove();});
-	$(window).blur(function(){counter.remove();});
-	$('body').mouseout(function(){counter.remove();}); //Blinks
-	$('body').keydown(key).keyup(key).click(key).dblclick(function(){setTimeout(key,10)});
-	//.mousedown(function(){setTimeout(key,10)}).;
-		
-	$('body').mousemove(function(e){
+    /**
+     * Main function
+     */
+
+    var key = function (e) {
+
+        var Length = 0, WordCount = 0;
+
+        //if (!e.ctrlKey) return
+        if (!counter.length) {
+            $('body').append('<div style=\'position:absolute; display:none; box-shadow: 0 0 17px #999; min-height:62px; width: auto; line-height:29px; text-align:left; padding: 2px 10px 0; opacity:1; z-index:1200000000000; color:black; background:#f9f9f9; -background:rgba(255,255,255,0.95); background-opacity:0.5; \' id=\'' + id + '\'></div>');
+        }
+
+        counter = $('#' + id);
+
+        //getting selected Text
+        var text = getSelectedText();
+
+        //getting Length
+        Length = text.length;
+
+        //getting Words from selected text
+        var words = getWords(text);
+
+        //getting Word Count
+        WordCount = words.length;
+
+        if (Length) {
+            counter.html("Words:&nbsp;" + WordCount + "<br/>Symbols:&nbsp;" + (0 + Length));
+            counter.show();
+        } else {
+            counter.hide();
+            counter.remove();
+        }
+    };
+
+    /**
+     * Event handlers
+     */
+    $('form').submit(removeCounter);
+    //FIX: This causes blinking
+    $(window).blur(removeCounter);
+    $('body').mouseleave(removeCounter).mouseenter(key); //Blinks
+    $('body').keydown(key).keyup(key).click(key).dblclick(function () {
+        setTimeout(key, 10)
+    });
+    //.mousedown(function(){setTimeout(key,10)}).;
+
+    $('body').mousemove(function (e) {
         key(e);
 
-        left = (e.pageX + 12 + 38) < $(window).width() ? e.pageX + 12 : e.pageX - 38;
-        _top = (e.pageY - 30) < 0 ? e.pageY + 30 : e.pageY - 30;
-        counter.css({'left': left, 'top': _top});
-	});
+        if (counter.text())
+        {
+            var left = (e.pageX + 12 + counter.width()) < $(window).width() ? e.pageX + 12 : e.pageX - counter.width();
+            var _top = (e.pageY - 75) < 0 ? e.pageY + 30 : e.pageY - 75;
+            counter.css({'left': left, 'top': _top});
+        }
+    });
 })(jQuery);
